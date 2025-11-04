@@ -14,6 +14,16 @@ This service is primarily designed for **OpenCloud** environments but can be use
 - 🧠 Extremely lightweight and stateless — built with Go  
 - 🧱 Works seamlessly behind Nginx or any reverse proxy
 
+## ✅ Tested / Compatible Identity Providers
+
+The proxy has been verified to work with the following OIDC implementations:
+
+| Identity Provider | Compatibility | Notes |
+|--------------------|---------------|--------|
+| **[Authentik](https://goauthentik.io/)** | ✅ Tested | Fully compatible — WebFinger rewrites confirmed functional |
+
+If you’ve tested it with other identity providers, please open a PR to extend the list.
+
 ---
 
 ## 🧠 How it works
