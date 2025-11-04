@@ -28,11 +28,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Determine Docker tags
+        id: vars
+        run: |
+          # Always tag with commit SHA
+          TAGS="ghcr.io/${{ github.repository_owner }}/opencloud-oidc-webfinger-proxy:${{ github.sha }}"
+
+          # If push to main → add :latest
+          if [[ "${GITHUB_REF_TYPE}" == "branch" && "${GITHUB_REF_NAME}" == "main" ]]; then
+            TAGS="$TAGS,ghcr.io/${{ github.repository_owner }}/opencloud-oidc-webfinger-proxy:latest"
+          fi
+
+          # If push of a version tag → add version tag (e.g. v1.0.0)
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION_TAG=${GITHUB_REF_NAME}
+            TAGS="$TAGS,ghcr.io/${{ github.repository_owner }}/opencloud-oidc-webfinger-proxy:${VERSION_TAG}"
+          fi
+
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
+          echo "Docker tags to push:"
+          echo "$TAGS" | tr ',' '\n'
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/opencloud-oidc-webfinger-proxy:latest
-            ghcr.io/${{ github.repository_owner }}/opencloud-oidc-webfinger-proxy:${{ github.sha }}
+          tags: ${{ env.TAGS }}
           platforms: linux/amd64,linux/arm64
