@@ -70,7 +70,7 @@ go run main.go
 Then test it:
 
 ```bash
-curl -H "X-Issuer-Suffix: opencloud-android"   "http://localhost:9210/.well-known/webfinger?rel=http%3A%2F%2Fopenid.net%2Fspecs%2Fconnect%2F1.0%2Fissuer&resource=https%3A%2F%2Fcloud.domain.com"
+curl -H "X-Issuer-Suffix: opencloud-android" "http://localhost:9210/.well-known/webfinger?rel=http%3A%2F%2Fopenid.net%2Fspecs%2Fconnect%2F1.0%2Fissuer&resource=https%3A%2F%2Fcloud.domain.com"
 ```
 
 Response:
@@ -85,3 +85,45 @@ Response:
   "subject": "https://cloud.domain.com"
 }
 ```
+
+## 🐳 Run with Docker
+
+```bash
+docker build -t opencloud-oidc-webfinger-proxy .
+
+docker run -p 9210:9210 \
+-e UPSTREAM_URL=https://cloud.domain.com \
+-e HREF_PATTERN=https://auth.domain.com/application/o/ \
+-e HREF_REPLACEMENT=https://auth.domain.com/application/o/ \
+-e DEFAULT_SUFFIX=opencloud \
+ghcr.io/2bros-group/opencloud-oidc-webfinger-proxy:latest
+```
+
+## 🧱 Reverse Proxy Nginx Integration
+
+```
+map $http_user_agent $issuer_suffix {
+    "~*mirall.*OpenCloud"  "opencloud-desktop";
+    "~*OpenCloudApp"       "opencloud-ios";
+    "~*OpenCloud-android"  "opencloud-android";
+    default                "opencloud";
+}
+
+location = /.well-known/webfinger {
+    proxy_set_header X-Issuer-Suffix $issuer_suffix;
+    proxy_pass http://127.0.0.1:9210;
+}
+```
+
+This allows your Nginx instance to determine the correct `issuer_suffix` per client  
+and let the proxy dynamically rewrite the WebFinger response accordingly.
+
+## 🤝 Contributing
+
+Pull requests are welcome!  
+If you plan a major change (e.g. multiple pattern replacements or caching),  
+please open an issue first to discuss what you’d like to add.
+
+## 📄 License
+
+MIT License © 2025 2Bros Digital Group GmbH
