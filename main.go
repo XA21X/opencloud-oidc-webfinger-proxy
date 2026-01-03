@@ -11,6 +11,30 @@ import (
 	"strings"
 )
 
+// getIssuerSuffix determines the issuer suffix based on User-Agent header
+// Mimics nginx map behavior:
+// map $http_user_agent $issuer_suffix {
+//     "~*mirall.*OpenCloud"  "opencloud-desktop";
+//     "~*OpenCloudApp"       "opencloud-ios";
+//     "~*OpenCloud-android"  "opencloud-android";
+//     default                "opencloud";
+// }
+func getIssuerSuffix(userAgent string) string {
+	ua := strings.ToLower(userAgent)
+
+	if matched, _ := regexp.MatchString(`mirall.*opencloud`, ua); matched {
+		return "opencloud-desktop"
+	}
+	if strings.Contains(ua, "opencloudapp") {
+		return "opencloud-ios"
+	}
+	if strings.Contains(ua, "opencloud-android") {
+		return "opencloud-android"
+	}
+
+	return "opencloud"
+}
+
 func replaceHref(v any, pattern, replacement, suffix string) any {
 	re := regexp.MustCompile(regexp.QuoteMeta(pattern) + `[^/]+/`)
 
@@ -54,7 +78,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	suffix := r.Header.Get("X-Issuer-Suffix")
 	if suffix == "" {
-		suffix = defaultSuffix
+		// Determine suffix from User-Agent if not explicitly set
+		userAgent := r.Header.Get("User-Agent")
+		if userAgent != "" {
+			suffix = getIssuerSuffix(userAgent)
+		} else {
+			suffix = defaultSuffix
+		}
 	}
 
 	target := upstream + r.URL.RequestURI()
