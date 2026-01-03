@@ -28,21 +28,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: '${{ github.repository_owner }}'
+
       - name: Determine Docker tags
         id: vars
         run: |
           # Always tag with commit SHA
-          TAGS="ghcr.io/${{ github.repository_owner }}/opencloud-oidc-webfinger-proxy:${{ github.sha }}"
+          TAGS="ghcr.io/${{ env.OWNER_LC }}/opencloud-oidc-webfinger-proxy:${{ github.sha }}"
 
           # If push to main → add :latest
           if [[ "${GITHUB_REF_TYPE}" == "branch" && "${GITHUB_REF_NAME}" == "main" ]]; then
-            TAGS="$TAGS,ghcr.io/${{ github.repository_owner }}/opencloud-oidc-webfinger-proxy:latest"
+            TAGS="$TAGS,ghcr.io/${{ env.OWNER_LC }}/opencloud-oidc-webfinger-proxy:latest"
           fi
 
           # If push of a version tag → add version tag (e.g. v1.0.0)
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             VERSION_TAG=${GITHUB_REF_NAME}
-            TAGS="$TAGS,ghcr.io/${{ github.repository_owner }}/opencloud-oidc-webfinger-proxy:${VERSION_TAG}"
+            TAGS="$TAGS,ghcr.io/${{ env.OWNER_LC }}/opencloud-oidc-webfinger-proxy:${VERSION_TAG}"
           fi
 
           echo "TAGS=$TAGS" >> $GITHUB_ENV
